@@ -1,0 +1,42 @@
+{
+  "config": {
+    "preset": "smoke",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n_values": [
+      1,
+      4,
+      16,
+      64
+    ],
+    "problems_per_seed": 35,
+    "calibration_candidates": 512,
+    "horizon": 18,
+    "ensemble_size": 28,
+    "posterior_spread": 1.0,
+    "blindspot": 1.0,
+    "action_scale": 1.0
+  },
+  "methods": [
+    "random",
+    "oracle",
+    "mean_bon",
+    "posterior_sample_bon",
+    "thompson_bon",
+    "ucb_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon"
+  ],
+  "rows": 3780,
+  "summary_rows": 36,
+  "files": {
+    "results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\smoke\\results.csv",
+    "summary": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\smoke\\summary.csv",
+    "calibration": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\smoke\\calibration.csv",
+    "generated_results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\smoke\\generated_results.tex"
+  }
+}

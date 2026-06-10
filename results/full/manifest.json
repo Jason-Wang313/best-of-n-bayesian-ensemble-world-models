@@ -1,0 +1,48 @@
+{
+  "config": {
+    "preset": "full",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "n_values": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64,
+      128
+    ],
+    "problems_per_seed": 45,
+    "calibration_candidates": 1536,
+    "horizon": 18,
+    "ensemble_size": 32,
+    "posterior_spread": 1.0,
+    "blindspot": 1.0,
+    "action_scale": 1.0
+  },
+  "methods": [
+    "random",
+    "oracle",
+    "mean_bon",
+    "posterior_sample_bon",
+    "thompson_bon",
+    "ucb_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon"
+  ],
+  "rows": 16200,
+  "summary_rows": 72,
+  "files": {
+    "results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\full\\results.csv",
+    "summary": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\full\\summary.csv",
+    "calibration": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\full\\calibration.csv",
+    "generated_results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\full\\generated_results.tex"
+  }
+}
