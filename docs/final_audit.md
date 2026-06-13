@@ -2,11 +2,18 @@
 
 ## Main Thesis
 
-Best-of-N over posterior-sampled Bayesian or ensemble world-model rollouts can amplify epistemic model-error optimism. The selected candidate may be the one that looks best under one optimistic posterior member rather than the one that is robust under the posterior.
+Posterior-tail selection in Bayesian or ensemble world-model rollouts can
+amplify epistemic model-error optimism. The selected candidate may be the one
+that looks best under one optimistic posterior member rather than the one that
+is robust under the posterior.
 
 ## Genuine Novelty
 
-The project does not claim to invent Best-of-N overoptimization or pessimism. The novel angle is architecture-specific: a Bayesian or ensemble world model produces posterior trajectory values, and posterior-sampled Best-of-N changes deployment from posterior aggregation to upper-tail selection over imagined dynamics.
+The project does not claim to invent inference-time overoptimization or
+pessimism. The novel angle is architecture-specific: a Bayesian or ensemble
+world model produces posterior trajectory values, and sampled-posterior maximum
+selection changes deployment from posterior aggregation to upper-tail selection
+over imagined dynamics.
 
 ## Literature Coverage
 
@@ -25,11 +32,17 @@ The formal material is a diagnostic proposition, not a sweeping theorem. It reli
 
 ## Strongest Empirical Result
 
-In the full deterministic sweep at `N=128`, posterior-sampled Best-of-N obtains selected true return `5.567` with regret `10.888` to the in-set candidate oracle. Posterior-mean selection obtains selected true return `16.355` with regret `0.100`.
+In the full deterministic sweep at `N=128`, sampled-posterior max selection
+obtains selected true return `5.567` with regret `10.888` to the in-set
+candidate oracle. Posterior-mean selection obtains selected true return
+`16.355` with regret `0.100`.
 
 ## Strongest Diagnostic Result
 
-At `N=128`, posterior-sampled Best-of-N selects candidates with OOD mass `0.304`, posterior standard deviation `8.234`, sample-over-mean gap `13.726`, and hazard-tail selection rate `0.276`. These values are the selected-trajectory signature of epistemic tail exploitation.
+At `N=128`, sampled-posterior max selection chooses candidates with OOD mass
+`0.304`, posterior standard deviation `8.234`, sample-over-mean gap `13.726`,
+and hazard-tail selection rate `0.276`. These values are the
+selected-trajectory signature of epistemic tail exploitation.
 
 ## Strongest Repair Result
 
@@ -57,4 +70,4 @@ Submission-shaped first pass. The PDF is anonymous, ICLR-template based, compile
 
 ## Exact PDF Path
 
-`C:\Users\wangz\Downloads\iclr_submission_bayesian_ensemble_world_models.pdf`
+`C:\Users\wangz\OneDrive\Desktop\best of n bayesian ensemble world models-v2.pdf`

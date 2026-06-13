@@ -2,7 +2,7 @@
 
 ## Attack 1: This is just reward-model overoptimization.
 
-Response: The operator-level analogy is acknowledged. The new part is the architecture-specific route: a posterior ensemble world model scores full imagined trajectories, and Best-of-N over posterior samples selects the most optimistic model-member rollout. The diagnostics report selected OOD mass, hazard mass, posterior standard deviation, and sample-over-mean gap.
+Response: The operator-level analogy is acknowledged. The new part is the architecture-specific route: a posterior ensemble world model scores full imagined trajectories, and sampled-posterior maximum selection can choose the most optimistic model-member rollout. The diagnostics report selected OOD mass, hazard mass, posterior standard deviation, and sample-over-mean gap.
 
 ## Attack 2: Pessimism in model-based offline RL is known.
 
@@ -14,7 +14,7 @@ Response: Correct as a final empirical package. The honest claim is a controlled
 
 ## Attack 4: Posterior-mean selection already fixes the problem.
 
-Response: That is part of the point. The failure is not "ensembles are bad." It is that posterior-sampled Best-of-N uses the wrong posterior aggregator for deployment when model error is epistemic and tail-heavy.
+Response: That is part of the point. The failure is not "ensembles are bad." It is that sampled-posterior maximum selection uses the wrong posterior aggregator for deployment when model error is epistemic and tail-heavy.
 
 ## Attack 5: The posterior might be miscalibrated by construction.
 
@@ -22,4 +22,4 @@ Response: The benchmark includes calibration on held-out candidate rollouts and 
 
 ## Attack 6: A simple lower confidence bound is too obvious.
 
-Response: The method is intentionally simple. The novelty is the diagnostic that says when a lower-confidence selector is necessary for posterior-sampled world-model Best-of-N. A stronger paper would replace the scalar LCB with conformal trajectory-level coverage.
+Response: The method is intentionally simple. The novelty is the diagnostic that says when a lower-confidence selector is necessary for posterior-tail world-model selection. A stronger paper would replace the scalar LCB with conformal trajectory-level coverage.

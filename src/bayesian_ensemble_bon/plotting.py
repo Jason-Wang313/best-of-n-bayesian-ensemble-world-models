@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 
 PLOT_METHODS = [
     ("oracle", "Candidate oracle"),
-    ("mean_bon", "Posterior mean"),
-    ("posterior_sample_bon", "Posterior-sample BoN"),
-    ("ucb_bon", "Mean + std"),
+    ("mean_bon", "Posterior mean max"),
+    ("posterior_sample_bon", "Sampled posterior max"),
+    ("ucb_bon", "Mean + std max"),
     ("calibrated_pessimistic_bon", "Calibrated LCB"),
 ]
 

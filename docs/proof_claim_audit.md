@@ -10,20 +10,20 @@ Attack: Candidate means and score errors are not independent in real learned dyn
 
 ## Formal Claim B: Lower-confidence selection can avoid exploit tails
 
-Claim: If a lower-confidence score ranks every exploit-tail candidate below a safe candidate, Best-of-N cannot select the exploit tail.
+Claim: If a lower-confidence score ranks every exploit-tail candidate below a safe candidate, a max selector cannot select the exploit tail.
 
 Status: Trivial deterministic margin claim. Useful only as a repair rationale.
 
 Attack: The margin condition is unverified in real tasks. Response: The experiment reports the empirical version: regret, OOD mass, and tail selection rate.
 
-## Empirical Claim C: Posterior-sampled BoN fails in this benchmark
+## Empirical Claim C: Sampled-posterior max fails in this benchmark
 
-Claim: In the full sweep, posterior-sampled BoN at N=128 has substantially larger regret and selected OOD mass than posterior mean or calibrated pessimism.
+Claim: In the full sweep, sampled-posterior max selection at N=128 has substantially larger regret and selected OOD mass than posterior mean or calibrated pessimism.
 
 Status: Verified by `results/full/summary.csv`.
 
 ## Empirical Claim D: Calibrated pessimism repairs the failure
 
-Claim: Calibrated pessimistic BoN reduces high-N regret from the posterior-sampled selector while staying close to the candidate oracle.
+Claim: Calibrated pessimistic selection reduces high-N regret from the posterior-sampled selector while staying close to the candidate oracle.
 
 Status: Verified by `results/full/summary.csv`. It is not claimed to dominate posterior mean in this benchmark.

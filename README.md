@@ -1,10 +1,17 @@
-# Best-of-N Bayesian Ensemble World Models
+# Posterior-Tail Selection
 
-This repo is a first-pass ICLR-style research artifact on Best-of-N inference for Bayesian, ensemble, posterior-sampled, and uncertainty-aware world models.
+This repo is an anonymous ICLR-style research artifact on posterior-tail
+selection in Bayesian, ensemble, posterior-sampled, and uncertainty-aware world
+models.
 
 ## Thesis
 
-Best-of-N over posterior-sampled world-model values can act as an upper-tail optimizer over epistemic model error. It may select trajectories that look high-value under one plausible ensemble member while being weak under the posterior and poor under the true latent dynamics. Posterior-mean or calibrated lower-confidence selection avoids this selected-tail failure in the controlled benchmark.
+A many-candidate maximum over posterior-sampled world-model values can act as an
+upper-tail optimizer over epistemic model error. It may select trajectories that
+look high-value under one plausible ensemble member while being weak under the
+posterior and poor under the true latent dynamics. Posterior-mean or calibrated
+lower-confidence selection avoids this selected-tail failure in the controlled
+benchmark.
 
 ## What Is Included
 
@@ -25,16 +32,22 @@ python -m experiments.run_benchmark --preset full
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 ```
 
-The build script copies the final submission PDF to:
+The build script copies the versioned final submission PDF to:
 
 ```text
-C:\Users\wangz\Downloads\iclr_submission_bayesian_ensemble_world_models.pdf
+C:\Users\wangz\OneDrive\Desktop\best of n bayesian ensemble world models-v2.pdf
 ```
 
 ## Main Full-Sweep Result
 
-At `N=128`, posterior-sampled Best-of-N has selected true return `5.567` and regret `10.888` to the in-set candidate oracle. Calibrated pessimistic selection has selected true return `16.223` and regret `0.233`. Posterior-mean selection is also strong with selected true return `16.355` and regret `0.100`.
+At `N=128`, sampled-posterior max selection has selected true return `5.567`
+and regret `10.888` to the in-set candidate oracle. Calibrated pessimistic
+selection has selected true return `16.223` and regret `0.233`. Posterior-mean
+selection is also strong with selected true return `16.355` and regret `0.100`.
 
 ## Claim Boundary
 
-This is a controlled diagnostic benchmark, not a real-robot or large-scale world-model result. The paper is submission-shaped and reproducible, but its strongest honest claim is mechanistic: the posterior-sampled Best-of-N aggregation rule can exploit epistemic tails.
+This is a controlled diagnostic benchmark, not a real-robot or large-scale
+world-model result. The paper is submission-shaped and reproducible, but its
+strongest honest claim is mechanistic: posterior-tail aggregation can exploit
+epistemic tails.

@@ -8,7 +8,19 @@ if (-not (Test-Path -LiteralPath "results\full\generated_results.tex")) {
 
 Copy-Item -LiteralPath "results\full\generated_results.tex" -Destination "paper\generated_results.tex" -Force
 
+$desktop = Join-Path $HOME "OneDrive\Desktop"
+if (-not (Test-Path -LiteralPath $desktop)) {
+  $desktop = Join-Path $HOME "Desktop"
+}
+$desktopPdf = Join-Path $desktop "best of n bayesian ensemble world models-v2.pdf"
+
 Push-Location -Path "paper"
+$latexArtifacts = @("main.aux", "main.bbl", "main.blg", "main.log", "main.out", "main.pdf")
+foreach ($artifact in $latexArtifacts) {
+  if (Test-Path -LiteralPath $artifact) {
+    Remove-Item -LiteralPath $artifact -Force
+  }
+}
 $latexmk = Get-Command latexmk -ErrorAction SilentlyContinue
 $perl = Get-Command perl -ErrorAction SilentlyContinue
 if ($latexmk -and $perl) {
@@ -24,7 +36,7 @@ if (-not $latexmk -or -not $perl -or $LASTEXITCODE -ne 0) {
 Pop-Location
 
 New-Item -ItemType Directory -Force -Path "paper\final" | Out-Null
-Copy-Item -LiteralPath "paper\main.pdf" -Destination "paper\final\iclr_submission.pdf" -Force
-Copy-Item -LiteralPath "paper\final\iclr_submission.pdf" -Destination "$HOME\Downloads\iclr_submission_bayesian_ensemble_world_models.pdf" -Force
-Write-Host "paper\final\iclr_submission.pdf"
-Write-Host "$HOME\Downloads\iclr_submission_bayesian_ensemble_world_models.pdf"
+Copy-Item -LiteralPath "paper\main.pdf" -Destination "paper\final\best of n bayesian ensemble world models-v2.pdf" -Force
+Copy-Item -LiteralPath "paper\final\best of n bayesian ensemble world models-v2.pdf" -Destination $desktopPdf -Force
+Write-Host "paper\final\best of n bayesian ensemble world models-v2.pdf"
+Write-Host $desktopPdf

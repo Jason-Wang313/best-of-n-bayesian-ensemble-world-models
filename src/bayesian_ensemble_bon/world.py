@@ -49,8 +49,8 @@ def make_posterior(seed: int, config: WorldConfig) -> list[PosteriorMember]:
 
     The posterior is intentionally plausible but imperfect: most models are
     competent in the in-distribution region, while the high-position hazard is
-    weakly identified. This is the regime in which Best-of-N can select the
-    most optimistic posterior member's hallucinated trajectory.
+    weakly identified. This is the regime in which a many-candidate maximum can
+    select the most optimistic posterior member's hallucinated trajectory.
     """
 
     rng = np.random.default_rng(seed)

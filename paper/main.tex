@@ -2,6 +2,7 @@
 \usepackage{iclr2026_conference,times}
 \input{math_commands.tex}
 \usepackage{hyperref}
+\hypersetup{hidelinks}
 \usepackage{url}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -9,7 +10,7 @@
 \usepackage{amssymb}
 \usepackage{microtype}
 
-\title{Best-of-N Posterior Sampling Can Exploit Bayesian World Models}
+\title{Posterior-Tail Selection in Bayesian Ensemble World Models}
 
 \author{Anonymous Authors\\
 Paper under double-blind review}
@@ -20,32 +21,65 @@ Paper under double-blind review}
 \maketitle
 
 \begin{abstract}
-Bayesian and ensemble world models are often treated as a safer substrate for planning because they expose epistemic uncertainty. Yet a natural inference-time scaling rule can invert that advantage: sample many candidate trajectories, score each with a posterior-sampled model, and execute the highest-scoring candidate. We show that this Best-of-N rule is an upper-tail operator over model error. In a controlled latent dynamics benchmark, posterior-sampled Best-of-N at $N=\PaperHighN{}$ selects trajectories with true return \SampleHighTrue{} and regret \SampleHighRegret{} to the in-set candidate oracle, while posterior-mean selection reaches true return \MeanHighTrue{} and regret 0.100. The selected posterior-sampled trajectory has a large sample-over-mean gap of 13.726 and elevated OOD mass \SampleHighOOD{}, indicating that the winner is often good under one optimistic model member rather than robust under the posterior. A calibration-aware lower-confidence selector reduces regret to \PessHighRegret{} and tail selection to \PessHighTail{} while retaining most of the candidate-oracle value. The contribution is intentionally narrow: a mechanism, diagnostic benchmark, and repair for Best-of-N over Bayesian or ensemble world-model rollouts, not a claim of real-robot or large-scale benchmark dominance.
+Bayesian and ensemble world models expose epistemic uncertainty, so they are
+often treated as a safer substrate for planning. This paper studies a failure
+in how that uncertainty is consumed: score each candidate trajectory with a
+posterior-sampled model member, execute the candidate with the largest sampled
+score, and the selector can convert epistemic uncertainty into a selected
+upper-tail residual. We call this failure \emph{posterior-tail selection}. In a
+controlled latent dynamics benchmark with \PaperSeeds{} posterior seeds and
+\PaperProblems{} candidate problems, sampled-posterior max selection at
+$N=\PaperHighN{}$ reaches true return \SampleHighTrue{} and regret
+\SampleHighRegret{} to the in-set candidate oracle, while posterior-mean
+selection reaches true return \MeanHighTrue{} and regret \MeanHighRegret{}. The selected
+sampled-posterior trajectory has posterior standard deviation \SampleHighStd{},
+sample-over-mean residual \SampleHighSampleGap{}, OOD mass \SampleHighOOD{}, and hazard-tail
+selection rate \SampleHighTail{}. A calibration-aware lower-confidence selector
+reduces regret to \PessHighRegret{} and tail selection to \PessHighTail{} while
+retaining most of the candidate-oracle value. The contribution is intentionally
+narrow: a mechanism, diagnostic benchmark, and repair for posterior-tail
+aggregation in Bayesian or ensemble world-model rollouts, not a claim of
+real-robot or large-scale benchmark dominance.
 \end{abstract}
 
 \section{Introduction}
 
 World models let agents evaluate futures before acting. Modern systems learn latent dynamics for planning and policy learning \citep{hafner2019planet,hafner2020dreamer,hafner2023dreamerv3}, use ensembles to represent model uncertainty \citep{chua2018pets,lakshminarayanan2017deep}, and often combine learned models with model-predictive control or offline policy optimization \citep{janner2019mbpo,yu2020mopo,kidambi2020morel,yu2021combo}. A common deployment instinct is to spend more inference-time compute: sample $N$ candidate action sequences, roll them out in the world model, and choose the best.
 
-This paper asks what happens when the score used by Best-of-N is not a posterior mean or lower confidence bound, but a posterior-sampled world-model value. This rule resembles Thompson sampling locally, but under Best-of-N it becomes a maximum over many noisy posterior samples. A candidate can win because one plausible model member hallucinates high return in an epistemically uncertain region. The agent then executes a trajectory that is not robust under the posterior.
+This paper asks what happens when the deployment score is not a posterior mean
+or lower confidence bound, but a separately sampled posterior value for each
+candidate. The rule resembles Thompson sampling locally, but the many-candidate
+maximum changes its behavior: a candidate can win because one plausible model
+member hallucinates high return in an epistemically uncertain region. The agent
+then executes a trajectory that is not robust under the posterior.
 
 The phenomenon is related to reward-model overoptimization in language models \citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,hsu2026tails}. The difference is architectural. In Bayesian world models, the error source is a learned dynamics posterior over imagined trajectories, and the diagnostic should measure trajectory OOD mass, ensemble dispersion, and posterior sample-over-mean gaps.
 
 We contribute:
 \begin{itemize}
-    \item a compact proposition describing selected upper-tail posterior error under Best-of-N;
-    \item a deterministic synthetic latent dynamics benchmark for posterior-sampled and ensemble world-model selection;
-    \item diagnostics for selected OOD mass, hazard mass, ensemble dispersion, optimism, and regret to the in-set candidate oracle;
-    \item a calibration-aware lower-confidence repair that uses held-out residual calibration and test-time ensemble predictions only.
+    \item the posterior-tail selection failure mode for Bayesian and ensemble
+    world-model planning;
+    \item a compact selected-residual proposition showing why a maximum over
+    posterior-sampled scores exposes upper-tail model error;
+    \item a deterministic latent dynamics benchmark for posterior-sampled and
+    ensemble world-model selectors;
+    \item selected-trajectory diagnostics for OOD mass, hazard mass, ensemble
+    dispersion, sampled residual, and regret to the in-set candidate oracle;
+    \item a calibration-aware lower-confidence repair that uses held-out
+    residual calibration and test-time ensemble predictions only.
 \end{itemize}
 
 \section{Mechanism}
 
-Let $a_1,\ldots,a_N$ be candidate action sequences. A Bayesian or ensemble world model gives each candidate a posterior distribution over imagined returns. Write a posterior sample score as
+Let $a_1,\ldots,a_N$ be candidate action sequences. A Bayesian or ensemble
+world model gives each candidate a posterior distribution over imagined
+returns. Write a posterior sample score as
 \begin{equation}
     S_i = \mu_i + \epsilon_i,
 \end{equation}
-where $\mu_i$ is the posterior mean and $\epsilon_i$ is the sampled model-member residual. Posterior-sampled Best-of-N selects $\hat{i}=\arg\max_i S_i$.
+where $\mu_i$ is the posterior mean and $\epsilon_i$ is the sampled
+model-member residual. The sampled-posterior max selector chooses
+$\hat{i}=\arg\max_i S_i$.
 
 \paragraph{Diagnostic proposition.}
 Suppose $\epsilon_i$ are independent centered residuals conditional on the candidate set, and suppose at least two candidates have nonzero residual variance. Then
@@ -54,7 +88,10 @@ Suppose $\epsilon_i$ are independent centered residuals conditional on the candi
 \end{equation}
 with strict inequality whenever residual variance can affect the argmax. Moreover, in equal-mean Gaussian residuals with variance $\sigma^2$, the expected selected residual scales as $\sigma \mathbb{E}[\max_i Z_i]$, which grows like $\sigma\sqrt{2\log N}$.
 
-This is not a theorem about all learned controllers. It is a warning about the aggregation operator. Posterior sampling is useful for exploration when one sampled model is followed coherently. But Best-of-N over independently sampled trajectory scores searches for posterior outliers.
+This is not a theorem about all learned controllers. It is a warning about the
+aggregation operator. Posterior sampling is useful for exploration when one
+sampled model is followed coherently. A maximum over independently sampled
+trajectory scores instead searches for posterior outliers.
 
 \paragraph{Repair principle.}
 Use a posterior-robust score:
@@ -71,8 +108,8 @@ For every problem instance, we draw a shared candidate set of size $\PaperHighN{
 
 \begin{itemize}
     \item \textbf{Posterior mean}: choose the candidate with largest ensemble mean.
-    \item \textbf{Posterior-sample BoN}: choose the largest score after sampling one ensemble member per candidate.
-    \item \textbf{Thompson BoN}: choose a single model member and rank all candidates by that member.
+    \item \textbf{Sampled-posterior max}: choose the largest score after sampling one ensemble member per candidate.
+    \item \textbf{Thompson-member max}: choose a single model member and rank all candidates by that member.
     \item \textbf{Mean + std}: an optimistic upper-confidence selector.
     \item \textbf{Quantile and calibrated LCB}: posterior-pessimistic repairs.
     \item \textbf{Oracle}: choose the highest true return within the same candidate set.
@@ -86,23 +123,27 @@ The full sweep uses \PaperSeeds{} posterior seeds and \PaperProblems{} candidate
     \centering
     \includegraphics[width=0.49\linewidth]{../figures/full/true_return_vs_n.png}
     \includegraphics[width=0.49\linewidth]{../figures/full/regret_vs_n.png}
-    \caption{Left: selected true return. Right: regret to the best true-return candidate in the same sampled set. Posterior-sampled Best-of-N degrades at large $N$ despite the candidate set containing strong trajectories.}
+    \caption{Left: selected true return. Right: regret to the best true-return candidate in the same sampled set. Sampled-posterior max selection degrades at large $N$ despite the candidate set containing strong trajectories.}
     \label{fig:return}
 \end{figure}
 
-Figure~\ref{fig:return} shows the main result. At $N=\PaperHighN{}$, posterior-sample BoN reaches true return \SampleHighTrue{} with regret \SampleHighRegret{}. Posterior mean reaches \MeanHighTrue{} with regret 0.100, and the candidate oracle reaches \OracleHighTrue{}. The failure is therefore not lack of good candidates; it is the posterior-sampled selection rule.
+Figure~\ref{fig:return} shows the main result. At $N=\PaperHighN{}$, sampled-posterior max reaches true return \SampleHighTrue{} with regret \SampleHighRegret{}. Posterior mean reaches \MeanHighTrue{} with regret \MeanHighRegret{}, and the candidate oracle reaches \OracleHighTrue{}. The failure is therefore not lack of good candidates; it is the posterior-sampled selection rule.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.49\linewidth]{../figures/full/optimism_gap_vs_n.png}
     \includegraphics[width=0.49\linewidth]{../figures/full/uncertainty_exploitation_vs_n.png}
-    \caption{Selected-trajectory diagnostics. Posterior-sampled Best-of-N chooses candidates with higher OOD mass and large sampled-score residuals over the posterior mean.}
+    \caption{Selected-trajectory diagnostics. Sampled-posterior max selection chooses candidates with higher OOD mass and large sampled-score residuals over the posterior mean.}
     \label{fig:diagnostics}
 \end{figure}
 
-Figure~\ref{fig:diagnostics} explains the mechanism. The posterior-sampled winner has selected OOD mass \SampleHighOOD{}, posterior standard deviation 8.234, and sampled score 13.726 above its posterior mean at $N=\PaperHighN{}$. In contrast, calibrated pessimism has selected OOD mass \PessHighOOD{} and tail-selection rate \PessHighTail{}. The lower-confidence repair obtains true return \PessHighTrue{} and regret \PessHighRegret{}.
+Figure~\ref{fig:diagnostics} explains the mechanism. The posterior-sampled winner has selected OOD mass \SampleHighOOD{}, posterior standard deviation \SampleHighStd{}, and sampled score \SampleHighSampleGap{} above its posterior mean at $N=\PaperHighN{}$. In contrast, calibrated pessimism has selected OOD mass \PessHighOOD{} and tail-selection rate \PessHighTail{}. The lower-confidence repair obtains true return \PessHighTrue{} and regret \PessHighRegret{}.
 
-Posterior mean is slightly better than calibrated pessimism in this benchmark. This is a useful boundary: the paper is not claiming that pessimism always improves over posterior means. It claims that if a deployment system uses posterior-sampled or upper-tail ensemble scores for Best-of-N, it should audit selected residuals and consider lower-confidence aggregation.
+Posterior mean is slightly better than calibrated pessimism in this benchmark.
+This is a useful boundary: the paper is not claiming that pessimism always
+improves over posterior means. It claims that if a deployment system uses
+posterior-sampled or upper-tail ensemble scores for many-candidate planning, it
+should audit selected residuals and consider lower-confidence aggregation.
 
 \section{Related Work}
 
@@ -113,10 +154,14 @@ PlaNet and Dreamer learn latent dynamics for imagination and control \citep{hafn
 MOPO, MOReL, COMBO, RAMBO, and CQL use pessimism or conservatism to avoid model or value overestimation in offline RL \citep{yu2020mopo,kidambi2020morel,yu2021combo,rigter2022rambo,kumar2020cql}. Our repair is much simpler and narrower: a calibrated lower-confidence score for a candidate selector.
 
 \paragraph{Bayesian uncertainty.}
-Deep ensembles, MC dropout, bootstrapped value functions, randomized priors, and posterior-sampling RL all provide uncertainty tools \citep{lakshminarayanan2017deep,gal2016dropout,osband2016bootstrapped,osband2018randomized,fan2021posterior}. Recent robotic world-model work also emphasizes epistemic uncertainty for deployment \citep{li2025rwm}. The current diagnostic asks how that uncertainty is consumed by Best-of-N.
+Deep ensembles, MC dropout, bootstrapped value functions, randomized priors, and posterior-sampling RL all provide uncertainty tools \citep{lakshminarayanan2017deep,gal2016dropout,osband2016bootstrapped,osband2018randomized,fan2021posterior}. Recent robotic world-model work also emphasizes epistemic uncertainty for deployment \citep{li2025rwm}. The current diagnostic asks how that uncertainty is consumed by many-candidate maximum selection.
 
-\paragraph{Best-of-N overoptimization.}
-Reward-model overoptimization and inference-time alignment work show that Best-of-N can reward-hack imperfect learned scorers \citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,hsu2026tails}. We import the operator-level warning but specialize it to Bayesian ensemble world models.
+\paragraph{Inference-time overoptimization.}
+Reward-model overoptimization and inference-time alignment work show that
+many-candidate selection can reward-hack imperfect learned scorers
+\citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,hsu2026tails}.
+We import the operator-level warning but specialize it to Bayesian ensemble
+world models.
 
 \section{Limitations}
 
@@ -134,7 +179,7 @@ The repository includes code, tests, deterministic results, figures, literature 
 
 \begin{itemize}
     \item \textbf{Claims}: The main claims are limited to the synthetic benchmark and the stated diagnostic proposition.
-    \item \textbf{Code}: The code path is \texttt{src/bayesian\_ensemble\_bon}; experiments are in \texttt{experiments/run\_benchmark.py}.
+    \item \textbf{Code}: The source package is under \texttt{src}; experiments are in \texttt{experiments/run\_benchmark.py}.
     \item \textbf{Data}: All data are generated synthetically from fixed seeds.
     \item \textbf{Compute}: The full sweep runs on CPU in roughly one minute on the development machine.
     \item \textbf{Prior work}: The repo includes a 100+ entry related-work matrix and a hostile-prior document.
@@ -142,6 +187,9 @@ The repository includes code, tests, deterministic results, figures, literature 
 
 \section{Additional Diagnostics}
 
-At $N=\PaperHighN{}$, posterior-sample BoN selects hazard-tail trajectories with rate \SampleHighTail{}, while calibrated pessimism selects them with rate \PessHighTail{}. The method is not an oracle: it uses held-out calibration candidates to fit $\beta$ and never reads test-candidate true returns.
+At $N=\PaperHighN{}$, sampled-posterior max selects hazard-tail trajectories
+with rate \SampleHighTail{}, while calibrated pessimism selects them with rate
+\PessHighTail{}. The method is not an oracle: it uses held-out calibration
+candidates to fit $\beta$ and never reads test-candidate true returns.
 
 \end{document}

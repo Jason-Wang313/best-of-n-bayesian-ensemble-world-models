@@ -8,7 +8,7 @@ from bayesian_ensemble_bon.plotting import make_figures
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run Bayesian ensemble Best-of-N benchmark.")
+    parser = argparse.ArgumentParser(description="Run Bayesian ensemble posterior-tail benchmark.")
     parser.add_argument("--preset", choices=["smoke", "full"], default="smoke")
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--figure-dir", type=Path, default=None)
