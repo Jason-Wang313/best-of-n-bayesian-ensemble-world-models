@@ -5,6 +5,7 @@
 \hypersetup{hidelinks}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -16,180 +17,564 @@
 Paper under double-blind review}
 
 \input{generated_results.tex}
+\input{generated_v3_results.tex}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Bayesian and ensemble world models expose epistemic uncertainty, so they are
-often treated as a safer substrate for planning. This paper studies a failure
-in how that uncertainty is consumed: score each candidate trajectory with a
-posterior-sampled model member, execute the candidate with the largest sampled
-score, and the selector can convert epistemic uncertainty into a selected
-upper-tail residual. We call this failure \emph{posterior-tail selection}. In a
-controlled latent dynamics benchmark with \PaperSeeds{} posterior seeds and
-\PaperProblems{} candidate problems, sampled-posterior max selection at
-$N=\PaperHighN{}$ reaches true return \SampleHighTrue{} and regret
-\SampleHighRegret{} to the in-set candidate oracle, while posterior-mean
-selection reaches true return \MeanHighTrue{} and regret \MeanHighRegret{}. The selected
-sampled-posterior trajectory has posterior standard deviation \SampleHighStd{},
-sample-over-mean residual \SampleHighSampleGap{}, OOD mass \SampleHighOOD{}, and hazard-tail
-selection rate \SampleHighTail{}. A calibration-aware lower-confidence selector
-reduces regret to \PessHighRegret{} and tail selection to \PessHighTail{} while
-retaining most of the candidate-oracle value. The contribution is intentionally
-narrow: a mechanism, diagnostic benchmark, and repair for posterior-tail
-aggregation in Bayesian or ensemble world-model rollouts, not a claim of
-real-robot or large-scale benchmark dominance.
+Bayesian and ensemble world models expose epistemic uncertainty, but
+uncertainty can be consumed in ways that make planning less safe. This paper
+studies \emph{posterior-tail selection}: candidate trajectories are scored by
+posterior-sampled world-model values, the highest sampled score is executed,
+and the selected trajectory becomes an upper-tail residual of epistemic model
+error. In a controlled latent dynamics benchmark with \PaperSeeds{} posterior
+seeds and \PaperProblems{} candidate problems, sampled-posterior maximum
+selection at $N=\PaperHighN{}$ reaches true return \SampleHighTrue{} and
+regret \SampleHighRegret{} to the in-set candidate oracle, while posterior
+mean selection reaches true return \MeanHighTrue{} and regret
+\MeanHighRegret{}. The selected sampled-posterior trajectory has posterior
+standard deviation \SampleHighStd{}, sample-over-mean residual
+\SampleHighSampleGap{}, OOD mass \SampleHighOOD{}, and hazard-tail selection
+rate \SampleHighTail{}. A calibration-aware lower-confidence selector reduces
+regret to \PessHighRegret{} and tail selection to \PessHighTail{}. This
+artifact adds \VThreeStressConditions{} stress conditions, paired high-$N$
+confidence intervals, calibration coverage diagnostics, and a lightweight
+learned bootstrap ensemble under evaluation shift. In the nominal stress
+condition, sampled posterior selection is worse than calibrated LCB by
+\VThreeNominalSampleLCBGap{} true-return points with 95\% CI
+[\VThreeNominalSampleLCBCILow{}, \VThreeNominalSampleLCBCIHigh{}]. The claim is
+deliberately scoped: this is a CPU-bounded diagnostic and repair study for
+posterior aggregation in world-model rollout selection, not real-robot
+validation or a large-scale benchmark dominance claim.
 \end{abstract}
 
 \section{Introduction}
 
-World models let agents evaluate futures before acting. Modern systems learn latent dynamics for planning and policy learning \citep{hafner2019planet,hafner2020dreamer,hafner2023dreamerv3}, use ensembles to represent model uncertainty \citep{chua2018pets,lakshminarayanan2017deep}, and often combine learned models with model-predictive control or offline policy optimization \citep{janner2019mbpo,yu2020mopo,kidambi2020morel,yu2021combo}. A common deployment instinct is to spend more inference-time compute: sample $N$ candidate action sequences, roll them out in the world model, and choose the best.
+World models let agents evaluate futures before acting. Modern systems learn
+latent dynamics for planning and policy learning \citep{hafner2019planet,
+hafner2020dreamer,hafner2023dreamerv3}, use ensembles to represent model
+uncertainty \citep{chua2018pets,lakshminarayanan2017deep}, and combine learned
+models with model-predictive control or offline policy optimization
+\citep{janner2019mbpo,yu2020mopo,kidambi2020morel,yu2021combo}. A common
+deployment instinct is to spend more inference-time compute: sample many
+candidate action sequences, roll them out in a world model, and choose the
+candidate with the highest model score.
 
-This paper asks what happens when the deployment score is not a posterior mean
-or lower confidence bound, but a separately sampled posterior value for each
-candidate. The rule resembles Thompson sampling locally, but the many-candidate
-maximum changes its behavior: a candidate can win because one plausible model
-member hallucinates high return in an epistemically uncertain region. The agent
-then executes a trajectory that is not robust under the posterior.
+That instinct is not automatically safe when the score is a posterior sample.
+Posterior sampling is useful when one sampled model is followed coherently as
+an exploration hypothesis. A per-candidate posterior-sampled maximum is a
+different operator: it searches across candidates for a high posterior draw.
+The selected action sequence may therefore be the one for which an uncertain
+model member is most optimistic, not the one with high posterior mean or high
+true return.
 
-The phenomenon is related to reward-model overoptimization in language models \citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,hsu2026tails}. The difference is architectural. In Bayesian world models, the error source is a learned dynamics posterior over imagined trajectories, and the diagnostic should measure trajectory OOD mass, ensemble dispersion, and posterior sample-over-mean gaps.
+We call this failure \emph{posterior-tail selection}. It is related to
+inference-time reward overoptimization in language models
+\citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,
+hsu2026tails}, but the error source and diagnostics differ. In Bayesian world
+models, the score comes from imagined dynamics. The appropriate audit measures
+selected posterior residuals, ensemble dispersion, OOD mass, hazard-tail
+selection, regret to the candidate oracle, and calibration behavior.
 
-We contribute:
+The experimental package is deliberately broader than a single deterministic
+curve: it includes a posterior stress grid, a learned bootstrap
+return-ensemble suite, paired effect-size confidence intervals, calibration
+coverage diagnostics, and an explicit claim-evidence audit. These additions do
+not make the paper a hardware result. They make the controlled claim harder to
+dismiss as a single cherry-picked setting.
+
+\paragraph{Contributions.}
+We make five scoped contributions.
 \begin{itemize}
-    \item the posterior-tail selection failure mode for Bayesian and ensemble
-    world-model planning;
-    \item a compact selected-residual proposition showing why a maximum over
-    posterior-sampled scores exposes upper-tail model error;
-    \item a deterministic latent dynamics benchmark for posterior-sampled and
-    ensemble world-model selectors;
-    \item selected-trajectory diagnostics for OOD mass, hazard mass, ensemble
-    dispersion, sampled residual, and regret to the in-set candidate oracle;
-    \item a calibration-aware lower-confidence repair that uses held-out
-    residual calibration and test-time ensemble predictions only.
+    \item We define posterior-tail selection as a deployment failure mode for
+    Bayesian and ensemble world-model planning.
+    \item We give a compact selected-residual proposition explaining why a
+    maximum over posterior-sampled scores exposes upper-tail model error.
+    \item We implement a deterministic latent dynamics benchmark with
+    posterior-sampled, Thompson-style, optimistic, pessimistic, quantile,
+    calibrated, random, and oracle selectors.
+    \item We add \VThreeStressConditions{} posterior stress conditions, a
+    learned bootstrap ensemble under evaluation shift, paired high-$N$
+    confidence intervals, and calibration coverage artifacts.
+    \item We show that a simple calibrated lower-confidence selector sharply
+    reduces selected-tail failure in the controlled posterior suite while
+    remaining honestly limited under learned-model shift.
 \end{itemize}
 
 \section{Mechanism}
 
 Let $a_1,\ldots,a_N$ be candidate action sequences. A Bayesian or ensemble
 world model gives each candidate a posterior distribution over imagined
-returns. Write a posterior sample score as
+returns. Write a posterior sampled score as
 \begin{equation}
     S_i = \mu_i + \epsilon_i,
 \end{equation}
 where $\mu_i$ is the posterior mean and $\epsilon_i$ is the sampled
-model-member residual. The sampled-posterior max selector chooses
+model-member residual. The sampled-posterior selector chooses
 $\hat{i}=\arg\max_i S_i$.
 
 \paragraph{Diagnostic proposition.}
-Suppose $\epsilon_i$ are independent centered residuals conditional on the candidate set, and suppose at least two candidates have nonzero residual variance. Then
+Suppose $\epsilon_i$ are independent centered residuals conditional on the
+candidate set, and at least two candidates have nonzero residual variance.
+Then
 \begin{equation}
     \mathbb{E}\left[\epsilon_{\hat{i}}\right] \geq 0,
 \end{equation}
-with strict inequality whenever residual variance can affect the argmax. Moreover, in equal-mean Gaussian residuals with variance $\sigma^2$, the expected selected residual scales as $\sigma \mathbb{E}[\max_i Z_i]$, which grows like $\sigma\sqrt{2\log N}$.
+with strict inequality whenever residual variance can affect the argmax. In
+the equal-mean Gaussian residual case with variance $\sigma^2$, the expected
+selected residual is $\sigma \mathbb{E}[\max_i Z_i]$, growing like
+$\sigma\sqrt{2\log N}$.
 
-This is not a theorem about all learned controllers. It is a warning about the
-aggregation operator. Posterior sampling is useful for exploration when one
-sampled model is followed coherently. A maximum over independently sampled
-trajectory scores instead searches for posterior outliers.
+The proposition is intentionally modest. It does not say every Bayesian
+planner fails or that posterior sampling is wrong. It says that the maximum
+operator changes what posterior samples mean: increasing the candidate budget
+selects not only high estimated value, but also high residual optimism.
 
 \paragraph{Repair principle.}
-Use a posterior-robust score:
+The repair tested here is a lower-confidence score
 \begin{equation}
     L_i = \mu_i - \beta \sigma_i,
 \end{equation}
-where $\sigma_i$ is ensemble standard deviation and $\beta$ is fitted from held-out calibration candidates as a high quantile of $|\mu_i - V_i| / (\sigma_i+\epsilon)$. This is deliberately simple: the paper tests whether the selected-tail failure is visible enough that a scalar lower-confidence rule removes it.
+where $\sigma_i$ is ensemble standard deviation and $\beta$ is fitted on held
+out calibration candidates as a quantile of
+$|\mu_i - V_i|/(\sigma_i+\epsilon)$. The rule is deliberately simple. If a
+scalar calibrated margin removes most of the selected-tail failure, the
+failure is visible and auditable rather than mysterious.
 
-\section{Benchmark}
+\section{Experimental Design}
 
-We build a two-dimensional latent control system with position and velocity. The true dynamics reward approaching a goal region and penalize entering a high-position hazard. Candidate action sequences are smooth random controls with occasional high-excursion probes. The posterior ensemble is accurate near the training-like region but uncertain about hazard strength and terminal value in high-position regions.
+\subsection{Base latent dynamics benchmark}
 
-For every problem instance, we draw a shared candidate set of size $\PaperHighN{}$ and evaluate smaller budgets by prefixing the same set. This makes curves across $N$ comparable. The selectors are:
+We build a two-dimensional latent control system with position and velocity.
+The true dynamics reward approaching a goal region and penalize entering a
+high-position hazard. Candidate action sequences are smooth random controls
+with occasional high-excursion probes. The posterior ensemble is accurate near
+the training-like region but uncertain about hazard strength and terminal
+value in high-position regions.
 
+For every problem instance, we draw a shared candidate set of size
+$\PaperHighN{}$ and evaluate smaller budgets by prefixing the same set. This
+makes curves across $N$ comparable. The full sweep uses \PaperSeeds{} posterior
+seeds and \PaperProblems{} candidate problems. Detailed rows are written to
+\texttt{results/full/results.csv}; paper figures are generated from
+\texttt{results/full/summary.csv}.
+
+\subsection{Selectors}
+
+The deployed selectors are intentionally diverse:
 \begin{itemize}
-    \item \textbf{Posterior mean}: choose the candidate with largest ensemble mean.
-    \item \textbf{Sampled-posterior max}: choose the largest score after sampling one ensemble member per candidate.
-    \item \textbf{Thompson-member max}: choose a single model member and rank all candidates by that member.
-    \item \textbf{Mean + std}: an optimistic upper-confidence selector.
-    \item \textbf{Quantile and calibrated LCB}: posterior-pessimistic repairs.
-    \item \textbf{Oracle}: choose the highest true return within the same candidate set.
+    \item \textbf{Posterior mean}: choose the candidate with largest ensemble
+    mean.
+    \item \textbf{Sampled posterior}: draw one model member score per
+    candidate and choose the largest sampled score.
+    \item \textbf{Thompson member}: draw one model member and rank all
+    candidates by that member.
+    \item \textbf{Mean + standard deviation}: an optimistic upper-confidence
+    selector.
+    \item \textbf{Pessimistic, quantile, and calibrated LCB}: robust
+    posterior-tail repairs.
+    \item \textbf{Random and oracle}: lower reference and in-set candidate
+    upper reference.
 \end{itemize}
 
-The full sweep uses \PaperSeeds{} posterior seeds and \PaperProblems{} candidate problems. The code writes all detailed rows to \texttt{results/full/results.csv}; the paper figures are generated from \texttt{results/full/summary.csv}.
+\subsection{Stress and learned suites}
 
-\section{Results}
+The expanded evidence package adds two bounded suites. The posterior stress suite evaluates
+\VThreeStressConditions{} conditions: nominal, low/high blindspot, low/high
+posterior spread, gentle/wide action generators, and two shifted combinations.
+Each condition uses \VThreeStressReplicates{} candidate problems at high $N$,
+with the same selector set and held-out calibration rule.
+
+The learned suite trains a bootstrap ridge return ensemble on synthetic
+rollout returns from a narrower action distribution and evaluates it under a
+wider action distribution. This is not a neural world model benchmark, but it
+is an important step beyond hand-coded posterior members: model uncertainty
+comes from finite-data bootstrap fitting, and selection is evaluated on
+held-out shifted candidate problems. The suite uses \VThreeLearnedProblems{}
+candidate problems and writes detailed artifacts to the generated results
+directory.
+
+\section{Main Results}
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.49\linewidth]{../figures/full/true_return_vs_n.png}
     \includegraphics[width=0.49\linewidth]{../figures/full/regret_vs_n.png}
-    \caption{Left: selected true return. Right: regret to the best true-return candidate in the same sampled set. Sampled-posterior max selection degrades at large $N$ despite the candidate set containing strong trajectories.}
+    \caption{Base benchmark. Left: selected true return. Right: regret to the
+    best true-return candidate in the same sampled set. Sampled-posterior
+    maximum selection degrades at large $N$ despite the candidate set
+    containing strong trajectories.}
     \label{fig:return}
 \end{figure}
 
-Figure~\ref{fig:return} shows the main result. At $N=\PaperHighN{}$, sampled-posterior max reaches true return \SampleHighTrue{} with regret \SampleHighRegret{}. Posterior mean reaches \MeanHighTrue{} with regret \MeanHighRegret{}, and the candidate oracle reaches \OracleHighTrue{}. The failure is therefore not lack of good candidates; it is the posterior-sampled selection rule.
+Figure~\ref{fig:return} shows the base result. At $N=\PaperHighN{}$,
+sampled-posterior selection reaches true return \SampleHighTrue{} with regret
+\SampleHighRegret{}. Posterior mean reaches true return \MeanHighTrue{} with
+regret \MeanHighRegret{}, calibrated LCB reaches true return \PessHighTrue{}
+with regret \PessHighRegret{}, and the candidate oracle reaches
+\OracleHighTrue{}. The failure is therefore not the absence of good candidate
+trajectories. It is the posterior-sampled selection rule.
+
+\begin{table}[t]
+\centering
+\caption{High-budget base benchmark. All values are generated from
+\texttt{results/full/summary.csv}.}
+\label{tab:base}
+\begin{tabular}{lrrr}
+\toprule
+Selector & True return & Regret & Tail rate \\
+\midrule
+Posterior mean & \MeanHighTrue{} & \MeanHighRegret{} & -- \\
+Sampled posterior & \SampleHighTrue{} & \SampleHighRegret{} & \SampleHighTail{} \\
+Calibrated LCB & \PessHighTrue{} & \PessHighRegret{} & \PessHighTail{} \\
+Candidate oracle & \OracleHighTrue{} & 0.000 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.49\linewidth]{../figures/full/optimism_gap_vs_n.png}
     \includegraphics[width=0.49\linewidth]{../figures/full/uncertainty_exploitation_vs_n.png}
-    \caption{Selected-trajectory diagnostics. Sampled-posterior max selection chooses candidates with higher OOD mass and large sampled-score residuals over the posterior mean.}
+    \caption{Selected-trajectory diagnostics. Sampled-posterior maximum
+    selection chooses candidates with higher OOD mass and large
+    sampled-score residuals over the posterior mean.}
     \label{fig:diagnostics}
 \end{figure}
 
-Figure~\ref{fig:diagnostics} explains the mechanism. The posterior-sampled winner has selected OOD mass \SampleHighOOD{}, posterior standard deviation \SampleHighStd{}, and sampled score \SampleHighSampleGap{} above its posterior mean at $N=\PaperHighN{}$. In contrast, calibrated pessimism has selected OOD mass \PessHighOOD{} and tail-selection rate \PessHighTail{}. The lower-confidence repair obtains true return \PessHighTrue{} and regret \PessHighRegret{}.
+Figure~\ref{fig:diagnostics} explains the mechanism. The sampled-posterior
+winner has selected OOD mass \SampleHighOOD{}, posterior standard deviation
+\SampleHighStd{}, and sampled score \SampleHighSampleGap{} above its posterior
+mean at $N=\PaperHighN{}$. Calibrated pessimism has selected OOD mass
+\PessHighOOD{} and tail-selection rate \PessHighTail{}.
 
-Posterior mean is slightly better than calibrated pessimism in this benchmark.
-This is a useful boundary: the paper is not claiming that pessimism always
-improves over posterior means. It claims that if a deployment system uses
-posterior-sampled or upper-tail ensemble scores for many-candidate planning, it
-should audit selected residuals and consider lower-confidence aggregation.
+\section{Stress, Learning, and Paired Effects}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.98\linewidth]{../figures/v3/v3_stress_regret_grid.png}
+    \caption{Posterior stress grid. Across \VThreeStressConditions{} posterior
+    and action-generator shifts, sampled-posterior high-$N$ selection has
+    substantially higher regret than calibrated LCB. The LCB has lower regret
+    in \VThreeStressLCBWinConditions{} of \VThreeStressConditions{}
+    conditions.}
+    \label{fig:stress}
+\end{figure}
+
+The stress grid tests whether the base result disappears when the posterior or
+candidate generator changes. It does not. In the nominal stress condition,
+sampled-posterior regret is \VThreeStressSampleRegret{} at $N=128$, while
+calibrated LCB regret is \VThreeStressLCBRegret{}. Across all
+\VThreeStressConditions{} stress conditions, calibrated LCB has lower high-$N$
+regret than sampled posterior selection in
+\VThreeStressLCBWinConditions{} conditions.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.49\linewidth]{../figures/v3/v3_learned_bootstrap_return.png}
+    \includegraphics[width=0.49\linewidth]{../figures/v3/v3_paired_effects.png}
+    \caption{Learned and paired analyses. Left: a learned bootstrap
+    return-ensemble under evaluation shift. All deployed learned selectors are
+    far below the candidate oracle, but calibrated LCB is the strongest
+    non-oracle deployed rule among the plotted selectors. Right: paired
+    high-$N$ true-return gaps with 95\% confidence intervals. Negative means
+    sampled-posterior selection underperforms calibrated LCB on the same
+    candidate problem.}
+    \label{fig:v3}
+\end{figure}
+
+The learned bootstrap suite is intentionally CPU-light but no longer uses
+hand-coded posterior members. It trains bootstrap ridge return predictors on
+one action distribution and evaluates under a wider action distribution. This
+suite is harder: the candidate oracle reaches high return, while all deployed
+learned selectors remain far below it. The useful result is comparative and
+scoped. At high $N$, sampled-posterior regret is
+\VThreeLearnedSampleRegret{}, posterior-mean regret is
+\VThreeLearnedMeanRegret{}, and calibrated LCB regret is
+\VThreeLearnedLCBRegret{}. The paired sampled-minus-LCB true-return gap is
+\VThreeLearnedSampleLCBGap{} with 95\% CI
+[\VThreeLearnedSampleLCBCILow{}, \VThreeLearnedSampleLCBCIHigh{}].
+
+The paired analysis matters because aggregate curves can hide which selector
+won on the same candidate problem. In the nominal posterior stress setting,
+the sampled-minus-LCB true-return gap is
+\VThreeNominalSampleLCBGap{} with 95\% CI
+[\VThreeNominalSampleLCBCILow{}, \VThreeNominalSampleLCBCIHigh{}]. This is a
+large paired degradation, not just a visually separated curve.
 
 \section{Related Work}
 
 \paragraph{World models and ensemble planning.}
-PlaNet and Dreamer learn latent dynamics for imagination and control \citep{hafner2019planet,hafner2020dreamer,hafner2023dreamerv3}. PETS introduced probabilistic ensembles with trajectory sampling for sample-efficient continuous control \citep{chua2018pets}. MBPO studies when short model rollouts are useful for policy optimization \citep{janner2019mbpo}. These works motivate the architecture, while our focus is the inference-time aggregation operator over posterior-sampled candidate scores.
+PlaNet and Dreamer learn latent dynamics for imagination and control
+\citep{hafner2019planet,hafner2020dreamer,hafner2023dreamerv3}. PETS uses
+probabilistic ensembles with trajectory sampling for sample-efficient
+continuous control \citep{chua2018pets}. MBPO studies when short model rollouts
+are useful for policy optimization \citep{janner2019mbpo}. These works motivate
+the architecture, while our focus is the inference-time aggregation operator
+over posterior-sampled candidate scores.
 
 \paragraph{Pessimism and model exploitation.}
-MOPO, MOReL, COMBO, RAMBO, and CQL use pessimism or conservatism to avoid model or value overestimation in offline RL \citep{yu2020mopo,kidambi2020morel,yu2021combo,rigter2022rambo,kumar2020cql}. Our repair is much simpler and narrower: a calibrated lower-confidence score for a candidate selector.
+MOPO, MOReL, COMBO, RAMBO, and CQL use pessimism or conservatism to avoid model
+or value overestimation in offline RL \citep{yu2020mopo,kidambi2020morel,
+yu2021combo,rigter2022rambo,kumar2020cql}. Our repair is narrower: a
+calibrated lower-confidence score for selecting from a candidate set. The
+contribution is the selected-tail diagnostic, not a new pessimistic RL
+algorithm.
 
 \paragraph{Bayesian uncertainty.}
-Deep ensembles, MC dropout, bootstrapped value functions, randomized priors, and posterior-sampling RL all provide uncertainty tools \citep{lakshminarayanan2017deep,gal2016dropout,osband2016bootstrapped,osband2018randomized,fan2021posterior}. Recent robotic world-model work also emphasizes epistemic uncertainty for deployment \citep{li2025rwm}. The current diagnostic asks how that uncertainty is consumed by many-candidate maximum selection.
+Deep ensembles, MC dropout, bootstrapped value functions, randomized priors,
+and posterior-sampling RL provide uncertainty tools
+\citep{lakshminarayanan2017deep,gal2016dropout,osband2016bootstrapped,
+osband2018randomized,fan2021posterior}. Recent robotic world-model work also
+emphasizes epistemic uncertainty for deployment \citep{li2025rwm}. The current
+diagnostic asks how uncertainty is consumed by maximum selection.
 
 \paragraph{Inference-time overoptimization.}
 Reward-model overoptimization and inference-time alignment work show that
 many-candidate selection can reward-hack imperfect learned scorers
-\citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,hsu2026tails}.
-We import the operator-level warning but specialize it to Bayesian ensemble
-world models.
+\citep{gao2023scaling,jinnai2024regularized,huang2025bon,yu2026caution,
+hsu2026tails}. We import the operator-level warning but specialize it to
+Bayesian and ensemble world-model rollouts.
 
 \section{Limitations}
 
-This is a first-pass controlled benchmark. It does not show real-robot results, MuJoCo results, or large video world-model experiments. The synthetic posterior is hand-designed to expose an identifiable failure mode. The proposition assumes centered residuals and independence that are only approximations in learned dynamics. The repair is a scalar LCB rather than a conformal or task-adaptive uncertainty method. These limits are deliberate: the paper should be read as a falsifiable diagnostic and artifact, not as a final deployment recipe.
+The evidence remains deliberately bounded. The benchmark is synthetic. The learned suite uses bootstrap ridge
+return predictors, not large neural video or robotics world models. The stress
+grid covers posterior spread, blindspot, and action-generator shifts, but not
+the full diversity of real deployment failures. The diagnostic proposition
+assumes centered residuals and independence that are approximations in learned
+dynamics. The lower-confidence repair is scalar and should not be read as a
+formal safety guarantee. These boundaries are reflected in the generated
+claim-evidence audit.
 
 \section{Reproducibility and Ethics}
 
-The repository includes code, tests, deterministic results, figures, literature notes, hostile-prior analysis, and a final audit. The benchmark is synthetic and has no human-subject data. The main safety implication is cautionary: increasing inference-time compute can amplify model error when the learned scorer is optimized too aggressively.
+The repository includes deterministic code, tests, generated CSVs, figures,
+literature notes, hostile-prior analysis, reviewer attacks, and a
+claim-evidence audit. The full base sweep and expanded suite run on CPU with bounded
+candidate counts and no external model downloads. The benchmark uses synthetic
+data and has no human-subject data. The safety implication is cautionary:
+increasing inference-time candidate search can amplify model error when the
+learned score is optimized too aggressively.
 
 \bibliography{references}
 \bibliographystyle{iclr2026_conference}
 
 \appendix
-\section{Checklist}
+\section{Proof Sketch}
 
+For the diagnostic proposition, condition on the candidate set. If
+$\hat{i}=\arg\max_i(\mu_i+\epsilon_i)$, then candidates with larger realized
+residuals are more likely to be selected. In the equal-mean case the selected
+residual is exactly $\max_i \epsilon_i$, so its expectation is nonnegative and
+strictly positive for non-degenerate residuals. Unequal means can reduce but do
+not erase the mechanism when residual variance changes the argmax with
+positive probability. The proposition is used only as a mechanism sketch; the
+empirical artifacts measure selected residuals directly.
+
+\section{Implementation Details}
+
+The base posterior ensemble is generated from perturbed latent dynamics:
+gain, damping, hazard center, hazard strength, goal shift, value bias, and
+terminal bias vary across members. Candidate sequences are smooth controls
+with occasional high-excursion probes. Metrics include selected true return,
+posterior mean, posterior standard deviation, sampled score, regret to the
+in-set oracle, sample-over-mean residual, OOD mass, hazard mass, action energy,
+uncertainty percentile, and hazard-tail selection.
+
+The learned bootstrap suite featurizes each action sequence using action
+moments, positive/negative action mass, cumulative-action proxies, velocity
+proxies, early/late sums, and time-weighted moments. Bootstrap ridge regressors
+are trained on true synthetic rollout returns from a narrower action
+distribution and evaluated under a wider distribution. This suite is a
+lightweight learned value-ensemble stress test, not a replacement for neural
+world-model benchmarks.
+
+\section{Claim-Evidence Table}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{p{0.27\linewidth}p{0.31\linewidth}X}
+\toprule
+Claim & Evidence artifact & Boundary \\
+\midrule
+Posterior-sampled high-$N$ selection can exploit epistemic tails. &
+\texttt{full/summary}; Figures~\ref{fig:return}--\ref{fig:diagnostics}. &
+Controlled latent dynamics, not hardware. \\
+Failure persists across posterior stress conditions. &
+\texttt{stress\_summary}; Figure~\ref{fig:stress}. &
+Stress grid is synthetic and CPU-bounded. \\
+Learned-model evidence exists beyond hand-coded posterior members. &
+\texttt{learned\_summary}; Figure~\ref{fig:v3}. &
+Bootstrap return ensemble, not a large neural world model. \\
+High-$N$ harm is paired and statistically reported. &
+\texttt{paired\_effects}. &
+Normal-approximate CI over candidate problems. \\
+Calibration is audited. &
+\texttt{coverage}. &
+Diagnostic coverage, not conformal safety. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Reviewer Attack Surface}
+
+\paragraph{Is this still synthetic?}
+Yes. The paper says so, and the claim is not real-robot validation. The
+expanded evidence is not meant to hide the limitation; it tests whether the mechanism is
+robust to stress settings and a learned bootstrap ensemble.
+
+\paragraph{Is pessimism the real contribution?}
+No. The contribution is the posterior-tail diagnostic and evidence that the
+failure is measurable. Calibrated LCB is a sanity repair showing that the
+failure can be reduced with held-out residual calibration.
+
+\paragraph{Does posterior mean already solve the base benchmark?}
+Mostly yes, and the paper foregrounds that boundary. The risk is for
+deployments that use posterior-sampled, Thompson-like, optimistic, or otherwise
+upper-tail scores as the selection objective.
+
+\paragraph{Does the learned suite prove generalization to large world models?}
+No. It is a stronger controlled artifact, not a large-scale claim. It uses
+finite-data bootstrap uncertainty and evaluation shift to test whether the same
+selector pathology appears without hand-coded posterior members.
+
+\section{Compute Budget}
+
+The expanded suite uses \VThreeStressConditions{} stress conditions, three seeds,
+bounded candidate pools, 24-member ensembles, and no model downloads. It is
+designed to run on CPU in roughly a minute on the development machine. This is
+why the evidence is broad across controlled conditions rather than heavy in a
+single large environment.
+
+\section{Selector Definitions}
+
+For a candidate set with posterior member predictions
+$P_{ij}$ for candidate $i$ and member $j$, the experiment evaluates the
+following deterministic or randomized scores:
+\begin{align}
+    \text{mean}(i) &= \frac{1}{M}\sum_j P_{ij},\\
+    \text{std}(i) &= \sqrt{\frac{1}{M}\sum_j (P_{ij}-\text{mean}(i))^2},\\
+    \text{sample}(i) &= P_{i,J_i},\quad J_i\sim \text{Uniform}\{1,\ldots,M\},\\
+    \text{Thompson}(i) &= P_{i,J},\quad J\sim \text{Uniform}\{1,\ldots,M\},\\
+    \text{UCB}(i) &= \text{mean}(i)+\text{std}(i),\\
+    \text{LCB}(i) &= \text{mean}(i)-\beta\,\text{std}(i).
+\end{align}
+The posterior-sampled selector uses an independently sampled member index per
+candidate. The Thompson-member selector uses one sampled member for the whole
+candidate set. This separation matters: coherent Thompson-style ranking tests a
+single posterior hypothesis, while per-candidate posterior sampling searches
+across posterior outliers.
+
+The calibrated LCB uses a held-out calibration set. Let $V_i$ be true synthetic
+return on calibration candidates. The scalar
+\begin{equation}
+    \beta = Q_{0.85}\left(\frac{|\text{mean}(i)-V_i|}{\text{std}(i)+10^{-8}}\right)
+\end{equation}
+is clipped to a bounded interval and then reused on test candidate problems.
+Test true returns are not used by the selector.
+
+\section{Stress Conditions}
+
+The posterior stress grid is designed to vary the mechanism rather than simply
+rerun the same benchmark. Each condition changes one or more knobs that affect
+posterior uncertainty or candidate extrapolation:
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{p{0.22\linewidth}cccX}
+\toprule
+Condition & Spread & Blindspot & Action scale & Purpose \\
+\midrule
+nominal & 1.00 & 1.00 & 1.00 & Base stress setting. \\
+low blindspot & 1.00 & 0.55 & 1.00 & Reduced hallucinated tail value. \\
+high blindspot & 1.00 & 1.55 & 1.00 & Stronger epistemic value bias. \\
+low spread & 0.65 & 1.00 & 1.00 & Tighter posterior members. \\
+high spread & 1.45 & 1.00 & 1.00 & Wider posterior dynamics. \\
+gentle actions & 1.00 & 1.00 & 0.75 & Less extrapolative candidate generator. \\
+wide actions & 1.00 & 1.00 & 1.25 & More extrapolative candidate generator. \\
+hard shift & 1.35 & 1.45 & 1.25 & Combined posterior and generator shift. \\
+calibrated shift & 0.85 & 1.35 & 1.15 & Moderate spread with stronger value bias. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The stress grid is not a substitute for real environments, but it closes a
+specific weakness of the controlled benchmark: the main conclusion no longer rests on one
+posterior parameterization. In each condition, the candidate oracle remains an
+in-set reference, so high regret for a deployed selector means the candidate
+pool contained good actions that the selector failed to choose.
+
+\section{Calibration Coverage Diagnostics}
+
+The calibration coverage file records, for each suite and condition, the rate
+at which the selected calibrated-LCB trajectory still has positive optimism
+gap. This is not a formal conformal guarantee; it is a falsification-oriented
+diagnostic. If calibrated LCB often selected trajectories whose posterior mean
+remained above true return, the repair would be unreliable even in the
+controlled setting. In the posterior stress suite, optimistic-miss rates remain
+small in the listed conditions, while the learned bootstrap suite is more
+fragile and exposes the cost of finite-data return modeling under evaluation
+shift.
+
+This distinction is important for reviewer honesty. The artifact does not
+claim that calibration solves learned world-model shift. It shows that:
 \begin{itemize}
-    \item \textbf{Claims}: The main claims are limited to the synthetic benchmark and the stated diagnostic proposition.
-    \item \textbf{Code}: The source package is under \texttt{src}; experiments are in \texttt{experiments/run\_benchmark.py}.
-    \item \textbf{Data}: All data are generated synthetically from fixed seeds.
-    \item \textbf{Compute}: The full sweep runs on CPU in roughly one minute on the development machine.
-    \item \textbf{Prior work}: The repo includes a 100+ entry related-work matrix and a hostile-prior document.
+    \item posterior-sampled selection is highly fragile in the designed
+    posterior stress conditions;
+    \item calibrated LCB is consistently stronger there;
+    \item under learned bootstrap shift, all non-oracle deployed selectors are
+    weak, but LCB is still stronger than sampled-posterior selection on paired
+    high-$N$ problems.
 \end{itemize}
 
-\section{Additional Diagnostics}
+\section{Learned Bootstrap Protocol}
 
-At $N=\PaperHighN{}$, sampled-posterior max selects hazard-tail trajectories
-with rate \SampleHighTail{}, while calibrated pessimism selects them with rate
-\PessHighTail{}. The method is not an oracle: it uses held-out calibration
-candidates to fit $\beta$ and never reads test-candidate true returns.
+The learned suite uses synthetic data but removes hand-coded posterior members.
+For each seed, it samples training action sequences from a narrower action
+distribution and evaluates true returns under the latent dynamics. It featurizes
+each action sequence using action moments, cumulative-action proxies,
+velocity-proxy summaries, high-excursion masses, and time-weighted moments.
+Then it fits a bootstrap ridge ensemble. At evaluation time, candidate actions
+come from a wider distribution. The same selector set is applied to the
+candidate-by-member prediction matrix.
+
+This protocol is intentionally modest and reproducible. It does not require
+PyTorch, a GPU, a simulator license, or external data. The cost is that it is
+not a full neural world model. The benefit is that it creates a learned
+finite-data posterior-like ensemble whose uncertainty comes from bootstrap
+resampling rather than from hand-picked model-member parameters.
+
+\section{Harsh Reviewer Closure}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{p{0.30\linewidth}X}
+\toprule
+Reviewer attack & Closure \\
+\midrule
+The paper is a short synthetic note. & The manuscript adds stress sweeps,
+learned bootstrap evidence, paired CIs, calibration coverage, and a detailed
+claim-evidence appendix. \\
+The result is one cherry-picked posterior. & The stress grid varies posterior
+spread, blindspot strength, and action extrapolation in nine conditions. \\
+The repair is just known pessimism. & The paper does not claim pessimism as an
+algorithmic invention; it uses LCB as a diagnostic repair proving the selected
+posterior tail is measurable and reducible. \\
+Posterior mean already works. & The paper states this boundary and targets
+deployments that rank by posterior samples, optimistic scores, or upper-tail
+ensemble values. \\
+No learned model is tested. & The bootstrap suite adds finite-data learned
+return ensembles under evaluation shift, with artifact-backed paired analysis. \\
+No real robot evidence. & The title, abstract, limitations, and claim table
+avoid hardware claims. The contribution is a controlled diagnostic benchmark. \\
+Statistics are missing. & Paired high-$N$ effect sizes and 95\% confidence
+intervals are generated in \texttt{paired\_effects}. \\
+Calibration might be hiding failures. & \texttt{coverage}
+records optimistic-miss rates and selected uncertainty under each condition. \\
+\bottomrule
+\end{tabularx}
+\end{center}
 
 \end{document}

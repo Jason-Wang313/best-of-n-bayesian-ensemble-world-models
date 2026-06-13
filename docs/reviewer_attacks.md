@@ -10,7 +10,11 @@ Response: Yes. The paper does not claim to invent pessimism. It uses calibrated 
 
 ## Attack 3: Synthetic experiments are not enough for ICLR.
 
-Response: Correct as a final empirical package. The honest claim is a controlled diagnostic benchmark and runnable first-pass artifact. The paper should be judged as a mechanism paper needing real-world validation, not as a robotics SOTA submission.
+Response: Correct if the paper claimed real-world deployment or robotics SOTA.
+It does not. The submission is framed as a bounded mechanism study with a base
+deterministic benchmark, 9 posterior stress conditions, learned-bootstrap
+return ensembles under evaluation shift, paired high-`N` confidence intervals,
+calibration coverage diagnostics, and explicit limitations.
 
 ## Attack 4: Posterior-mean selection already fixes the problem.
 
@@ -22,4 +26,8 @@ Response: The benchmark includes calibration on held-out candidate rollouts and 
 
 ## Attack 6: A simple lower confidence bound is too obvious.
 
-Response: The method is intentionally simple. The novelty is the diagnostic that says when a lower-confidence selector is necessary for posterior-tail world-model selection. A stronger paper would replace the scalar LCB with conformal trajectory-level coverage.
+Response: The method is intentionally simple. The novelty is the diagnostic that
+says when a lower-confidence selector is necessary for posterior-tail
+world-model selection. The paper does not claim the scalar LCB is a complete
+safety method; the calibration-coverage artifacts show where it succeeds in the
+posterior suite and where learned-model shift remains fragile.

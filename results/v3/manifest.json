@@ -1,0 +1,93 @@
+{
+  "config": {
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n_values": [
+      16,
+      64,
+      128
+    ],
+    "problems_per_condition": 24,
+    "calibration_candidates": 768,
+    "train_candidates": 1400,
+    "horizon": 18,
+    "ensemble_size": 24
+  },
+  "stress_conditions": [
+    {
+      "condition": "nominal",
+      "posterior_spread": 1.0,
+      "blindspot": 1.0,
+      "action_scale": 1.0
+    },
+    {
+      "condition": "low_blindspot",
+      "posterior_spread": 1.0,
+      "blindspot": 0.55,
+      "action_scale": 1.0
+    },
+    {
+      "condition": "high_blindspot",
+      "posterior_spread": 1.0,
+      "blindspot": 1.55,
+      "action_scale": 1.0
+    },
+    {
+      "condition": "low_spread",
+      "posterior_spread": 0.65,
+      "blindspot": 1.0,
+      "action_scale": 1.0
+    },
+    {
+      "condition": "high_spread",
+      "posterior_spread": 1.45,
+      "blindspot": 1.0,
+      "action_scale": 1.0
+    },
+    {
+      "condition": "gentle_actions",
+      "posterior_spread": 1.0,
+      "blindspot": 1.0,
+      "action_scale": 0.75
+    },
+    {
+      "condition": "wide_actions",
+      "posterior_spread": 1.0,
+      "blindspot": 1.0,
+      "action_scale": 1.25
+    },
+    {
+      "condition": "hard_shift",
+      "posterior_spread": 1.35,
+      "blindspot": 1.45,
+      "action_scale": 1.25
+    },
+    {
+      "condition": "calibrated_shift",
+      "posterior_spread": 0.85,
+      "blindspot": 1.35,
+      "action_scale": 1.15
+    }
+  ],
+  "stress_rows": 17496,
+  "learned_rows": 1944,
+  "paired_rows": 8,
+  "coverage_rows": 10,
+  "files": {
+    "stress_results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\stress_results.csv",
+    "stress_summary": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\stress_summary.csv",
+    "learned_results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\learned_results.csv",
+    "learned_summary": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\learned_summary.csv",
+    "paired_effects": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\paired_effects.csv",
+    "calibration_coverage": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\calibration_coverage.csv",
+    "generated_results": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\generated_results.tex",
+    "claim_audit": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\results\\v3\\claim_evidence_audit.md",
+    "learned_figure": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\figures\\v3\\v3_learned_bootstrap_return.png",
+    "stress_figure": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\figures\\v3\\v3_stress_regret_grid.png",
+    "paired_figure": "C:\\Users\\wangz\\best of n bayesian ensemble world models\\figures\\v3\\v3_paired_effects.png"
+  },
+  "compute_note": "CPU-light numpy sweeps; no model downloads; bounded candidate and ensemble sizes."
+}

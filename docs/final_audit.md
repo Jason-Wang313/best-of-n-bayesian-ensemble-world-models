@@ -48,26 +48,42 @@ selected-trajectory signature of epistemic tail exploitation.
 
 The calibrated lower-confidence selector obtains selected true return `16.223`, regret `0.233`, selected OOD mass `0.168`, and hazard-tail selection rate `0.004` at `N=128`. It uses held-out calibration candidates and ensemble predictions only.
 
+## Expanded Evidence Result
+
+The expanded suite adds 9 posterior stress conditions, 72 high-`N` posterior
+stress replicates, 72 learned-bootstrap evaluation problems, paired high-`N`
+confidence intervals, and calibration coverage diagnostics. In the nominal
+stress condition, sampled-posterior selection is worse than calibrated LCB by
+`-12.455` true-return points with 95% CI `[-16.926, -7.984]`. In the
+learned-bootstrap shift suite, sampled-posterior selection is worse than
+calibrated LCB by `-1.548` true-return points with 95% CI `[-2.412, -0.683]`.
+
 ## Biggest Weaknesses
 
 - The benchmark is synthetic and hand-designed.
 - The paper does not include real robotics, MuJoCo, or large-scale video world-model experiments.
+- The learned suite is a bootstrap ridge return-ensemble stress test rather than a neural video or robotics world model.
 - The theory is intentionally modest and does not prove a general result for arbitrary correlated learned dynamics.
 - Posterior mean is already strong in the benchmark, so the repair is mainly a correction for posterior-sampled or upper-tail selection rules.
 
 ## Paper-Readiness Judgment
 
-Submission-shaped first pass. The PDF is anonymous, ICLR-template based, compiled, and backed by deterministic code/results. It is honest enough to circulate as a workshop or internal-review draft. For a serious ICLR main-track attempt, the next step should be learned-model experiments on standard continuous-control or robotics tasks.
+Submission-ready as a bounded mechanism paper. The PDF is anonymous, ICLR-template based, compiled, backed by deterministic code/results, and no longer depends on a single synthetic curve: it includes posterior stress sweeps, learned-bootstrap evidence, paired confidence intervals, calibration coverage, limitations, reproducibility notes, and a claim-evidence appendix. The remaining scope boundary is explicit rather than hidden: this is not a real-robot or large-scale world-model benchmark paper.
 
 ## Verification
 
 - `python -m pip install -e .`: passed.
-- `pytest -q`: passed with 6 tests.
+- `python -m compileall src experiments tests -q`: passed.
+- `pytest -q`: passed with 9 tests.
 - `python -m experiments.run_benchmark --preset smoke`: passed and generated `results/smoke` and `figures/smoke`.
 - `python -m experiments.run_benchmark --preset full`: passed and generated `results/full` and `figures/full`.
+- `python -m experiments.run_v3_evidence`: passed and generated `results/v3` and `figures/v3`.
 - `powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1`: passed and compiled the PDF.
-- Final LaTeX log has no unresolved citation or reference warnings.
+- Final LaTeX log has no unresolved citation or reference warnings and no overfull boxes.
+- Extracted PDF text contains no project-owned Best-of-N wrapper framing; the only `best-of-n` matches are cited prior-work titles.
 
 ## Exact PDF Path
 
-`C:\Users\wangz\OneDrive\Desktop\best of n bayesian ensemble world models-v2.pdf`
+Local final artifact: `paper\final\best of n bayesian ensemble world models-v3.pdf`
+
+Visible Desktop final artifact after guarded publish: `C:\Users\wangz\OneDrive\Desktop\best of n bayesian ensemble world models-v3.pdf`

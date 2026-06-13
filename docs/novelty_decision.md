@@ -4,9 +4,9 @@
 
 Diagnostic plus repair.
 
-The project is strongest as a mechanism-first diagnostic benchmark. A full theorem about arbitrary Bayesian world models would be too broad for the evidence here, and a robotics-scale empirical claim would be dishonest. The strongest first-pass contribution is:
+The project is strongest as a mechanism-first diagnostic benchmark. A full theorem about arbitrary Bayesian world models would be too broad for the evidence here, and a robotics-scale empirical claim would be dishonest. The strongest contribution is:
 
-> Best-of-N over posterior-sampled or ensemble world-model values can act as an epistemic upper-tail optimizer. It selects trajectories that look good under at least one plausible model member, not trajectories that are robust under the posterior. A calibrated lower-confidence selector restores most of the in-set oracle value in the controlled benchmark.
+> Posterior-tail selection over Bayesian or ensemble world-model values can act as an epistemic upper-tail optimizer. It selects trajectories that look good under at least one plausible model member, not trajectories that are robust under the posterior. A calibrated lower-confidence selector restores most of the in-set oracle value in the controlled posterior suite and remains a useful, explicitly limited baseline under learned-model shift.
 
 ## Why Not a Pure Theory Paper
 
@@ -20,4 +20,4 @@ The repository contains a synthetic benchmark rather than MuJoCo, real-robot, or
 
 Mechanism -> diagnostic -> empirical validation -> calibration-aware repair.
 
-The ICLR paper should emphasize that the benchmark is deliberately compact and falsifiable: posterior-mean selection remains strong, posterior-sampled Best-of-N fails at high N, and calibrated pessimism removes most of the selected-tail failure.
+The ICLR paper should emphasize that the benchmark is deliberately compact and falsifiable: posterior-mean selection remains strong, posterior-sampled tail selection fails at high candidate budgets, and calibrated pessimism removes most of the selected-tail failure in the controlled posterior suite.

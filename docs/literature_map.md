@@ -46,14 +46,14 @@ This is an autonomous first-pass literature package for the repo. The sweep is b
 
 ## 22-Paper Deep-Read Threat Set
 
-The deep-read set focuses on papers that could plausibly subsume the final contribution. The result was that no single paper covers all three ingredients: posterior-sampled or ensemble world-model rollouts, inference-time Best-of-N selection pressure, and a selected-trajectory diagnostic showing amplification of epistemic model error.
+The deep-read set focuses on papers that could plausibly subsume the final contribution. The result was that no single paper covers all three ingredients: posterior-sampled or ensemble world-model rollouts, inference-time posterior-tail selection pressure, and a selected-trajectory diagnostic showing amplification of epistemic model error.
 
 - PETS and model-ensemble TRPO establish ensemble planning but treat sampling as a way to propagate uncertainty rather than as a maximum-selection failure mode.
 - MOPO, MOReL, COMBO, RAMBO, and MOBILE establish pessimism against model error, mainly as offline policy optimization or value regularization.
-- PSRL papers establish posterior sampling but use episode-level probability matching rather than Best-of-N over many candidate trajectories.
+- PSRL papers establish posterior sampling but use episode-level probability matching rather than a per-candidate posterior-sampled maximum over many trajectory options.
 - RWM-O/RWM-U and Bayesian safe-exploration papers are the closest world-model systems with epistemic uncertainty, but the deployment question is uncertainty-penalized policy optimization or safety.
 - Gao et al., Huang et al., Jinnai et al., Ichihara et al., Yu et al., and Hsu et al. are the closest Best-of-N theory and repair papers, but they study language reward models or verifier distributions rather than learned dynamics posterior rollouts.
 
 ## Resulting Gap
 
-The most defensible gap is a diagnostic one: Best-of-N over posterior-sampled world-model values is not just "more planning." It changes the posterior aggregation operator from expectation or lower confidence to a selected upper tail. In uncertain regions, that upper-tail operator can select trajectories whose high score is caused by one optimistic posterior member rather than by posterior-robust value.
+The most defensible gap is a diagnostic one: posterior-tail selection over world-model values is not just "more planning." It changes the posterior aggregation operator from expectation or lower confidence to a selected upper tail. In uncertain regions, that upper-tail operator can select trajectories whose high score is caused by one optimistic posterior member rather than by posterior-robust value.
