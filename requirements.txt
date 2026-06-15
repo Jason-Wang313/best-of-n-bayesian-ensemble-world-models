@@ -1,3 +1,5 @@
 numpy>=1.23
 matplotlib>=3.7
+gymnasium>=1.0
+mujoco>=3.0
 pytest>=7.4

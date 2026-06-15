@@ -1,0 +1,7 @@
+env_name,seed,calibration_beta,validation_gate_method,mean_bon_validation_return,posterior_sample_bon_validation_return,pessimistic_bon_validation_return,quantile_bon_validation_return,calibrated_pessimistic_bon_validation_return,train_transitions,calibration_problems,calibration_candidates
+InvertedPendulum-v5,0,4.0,calibrated_pessimistic_bon,14.5,14.5,14.5,14.5,14.5,1200,4,32
+InvertedPendulum-v5,1,4.0,calibrated_pessimistic_bon,10.0,10.0,10.0,10.0,10.0,1200,4,32
+InvertedPendulum-v5,2,4.0,calibrated_pessimistic_bon,18.0,8.5,22.25,22.25,26.0,1200,4,32
+Reacher-v5,0,3.9363668020548572,calibrated_pessimistic_bon,-7.4840577783491105,-7.4840577783491105,-7.4840577783491105,-7.4840577783491105,-7.4840577783491105,1200,4,32
+Reacher-v5,1,1.7857898128367853,calibrated_pessimistic_bon,-8.477301644712817,-8.477301644712817,-8.477301644712817,-8.477301644712817,-8.477301644712817,1200,4,32
+Reacher-v5,2,2.5679182410581403,calibrated_pessimistic_bon,-8.052253776675066,-8.052253776675066,-8.052253776675066,-8.052253776675066,-8.052253776675066,1200,4,32

@@ -1,0 +1,157 @@
+{
+  "status": "FROZEN",
+  "benchmark": "Gymnasium classic-control real environment dynamics bridge",
+  "config": {
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "env_names": [
+      "Pendulum-v1",
+      "MountainCarContinuous-v0"
+    ],
+    "n_values": [
+      8,
+      32,
+      96
+    ],
+    "train_transitions": 900,
+    "calibration_problems": 5,
+    "calibration_candidates": 48,
+    "test_problems": 12,
+    "ensemble_size": 12,
+    "ridge": 0.001,
+    "randomized_prior_scale": 0.18,
+    "cem_iterations": 3,
+    "cem_population": 80,
+    "cem_elites": 10
+  },
+  "env_specs": {
+    "Pendulum-v1": {
+      "name": "Pendulum-v1",
+      "state_low": [
+        -3.141592653589793,
+        -8.0
+      ],
+      "state_high": [
+        3.141592653589793,
+        8.0
+      ],
+      "train_state_low": [
+        -1.2,
+        -2.5
+      ],
+      "train_state_high": [
+        1.2,
+        2.5
+      ],
+      "test_state_low": [
+        -3.141592653589793,
+        -4.0
+      ],
+      "test_state_high": [
+        3.141592653589793,
+        4.0
+      ],
+      "action_low": -2.0,
+      "action_high": 2.0,
+      "train_action_scale": 0.45,
+      "candidate_action_scale": 1.0,
+      "horizon": 25
+    },
+    "MountainCarContinuous-v0": {
+      "name": "MountainCarContinuous-v0",
+      "state_low": [
+        -1.2,
+        -0.07
+      ],
+      "state_high": [
+        0.6,
+        0.07
+      ],
+      "train_state_low": [
+        -0.65,
+        -0.025
+      ],
+      "train_state_high": [
+        -0.35,
+        0.025
+      ],
+      "test_state_low": [
+        -0.62,
+        -0.015
+      ],
+      "test_state_high": [
+        -0.38,
+        0.015
+      ],
+      "action_low": -1.0,
+      "action_high": 1.0,
+      "train_action_scale": 0.55,
+      "candidate_action_scale": 1.0,
+      "horizon": 45
+    }
+  },
+  "methods": [
+    "random",
+    "oracle",
+    "mean_bon",
+    "posterior_sample_bon",
+    "thompson_bon",
+    "ucb_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon",
+    "validation_gated_bon",
+    "scripted_teacher",
+    "cem_mean_mpc"
+  ],
+  "validation_gate_candidates": [
+    "mean_bon",
+    "posterior_sample_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon"
+  ],
+  "validation_gate_tie_preference": [
+    "calibrated_pessimistic_bon",
+    "quantile_bon",
+    "pessimistic_bon",
+    "posterior_sample_bon",
+    "mean_bon"
+  ],
+  "validation_gate_near_tie_margin": 0.05,
+  "candidate_pool": "shared shuffled random-plus-generic control action sequences",
+  "standalone_baselines": [
+    "scripted_teacher",
+    "cem_mean_mpc"
+  ],
+  "claim_gates": {
+    "real_benchmark_present": true,
+    "standard_envs": [
+      "Pendulum-v1",
+      "MountainCarContinuous-v0"
+    ],
+    "uses_true_environment_returns_for_final_measurement": true,
+    "randomized_prior_bootstrap_ensemble": true,
+    "selector_gate_fit_on_calibration_only": true,
+    "standalone_baselines_not_inserted_into_selector_pool": true,
+    "final_evidence_after_protocol_freeze": true,
+    "not_claimed": [
+      "MuJoCo SOTA",
+      "D4RL SOTA",
+      "real robot validation",
+      "large-scale video world-model dominance"
+    ]
+  },
+  "artifact_hashes": {
+    "gym_results": "fdedfe963437e16c07af94771c8d38648c93e6897c988be1d1ab1a4132a6542f",
+    "gym_summary": "befc1c8962a8da1dad9149099f2e5dd8028c83a10df862eb780a7e992a258b80",
+    "gym_paired_effects": "9bb8a8a4d483cdaa3e13b412083f4c7876a91a79b342fb678bdffae59a436f9d",
+    "gym_calibration": "911cc6690e01ca8ee4ecc1e2dc1a9b51e242c61969fa1a902c79a3aee2c5b1bf",
+    "generated_results": "3f84b0af5dadf0246034ef7f429dcf32ff7ca195d12bd9a92ae6d12087d630d7",
+    "gym_return_figure": "daab569961989534bb49ea1f1414e7f3ca97781b63a1505fef6c5a093c2ec625",
+    "gym_regret_figure": "2847c4e44c04562b8baad97694838058f97fe3edbe26ab740c587c9bee6e0bc7"
+  }
+}

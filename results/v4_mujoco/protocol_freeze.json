@@ -1,0 +1,102 @@
+{
+  "status": "FROZEN",
+  "benchmark": "Gymnasium MuJoCo continuous-control world-model planning bridge",
+  "note": "Each problem resets the simulator from a stored qpos/qvel snapshot.",
+  "config": {
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "env_names": [
+      "InvertedPendulum-v5",
+      "Reacher-v5"
+    ],
+    "n_values": [
+      8,
+      32,
+      96
+    ],
+    "train_transitions": 1200,
+    "calibration_problems": 4,
+    "calibration_candidates": 32,
+    "test_problems": 6,
+    "ensemble_size": 8,
+    "ridge": 0.005,
+    "randomized_prior_scale": 0.1,
+    "cem_iterations": 2,
+    "cem_population": 48,
+    "cem_elites": 8
+  },
+  "env_specs": {
+    "InvertedPendulum-v5": {
+      "name": "InvertedPendulum-v5",
+      "horizon": 40,
+      "train_action_scale": 0.45,
+      "candidate_action_scale": 1.0
+    },
+    "Reacher-v5": {
+      "name": "Reacher-v5",
+      "horizon": 35,
+      "train_action_scale": 0.45,
+      "candidate_action_scale": 1.0
+    }
+  },
+  "methods": [
+    "random",
+    "oracle",
+    "mean_bon",
+    "posterior_sample_bon",
+    "thompson_bon",
+    "ucb_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon",
+    "validation_gated_bon",
+    "cem_mean_mpc"
+  ],
+  "validation_gate_candidates": [
+    "mean_bon",
+    "posterior_sample_bon",
+    "pessimistic_bon",
+    "quantile_bon",
+    "calibrated_pessimistic_bon"
+  ],
+  "validation_gate_tie_preference": [
+    "calibrated_pessimistic_bon",
+    "quantile_bon",
+    "pessimistic_bon",
+    "posterior_sample_bon",
+    "mean_bon"
+  ],
+  "validation_gate_near_tie_margin": 0.05,
+  "candidate_pool": "shared shuffled smoothed-random, sinusoidal, and generic control action sequences",
+  "claim_gates": {
+    "recognized_mujoco_envs_present": true,
+    "standard_envs": [
+      "InvertedPendulum-v5",
+      "Reacher-v5"
+    ],
+    "uses_true_environment_returns_for_final_measurement": true,
+    "randomized_prior_bootstrap_ensemble": true,
+    "selector_gate_fit_on_calibration_only": true,
+    "finite_model_rollout_clipping": 20.0,
+    "standalone_baselines_not_inserted_into_selector_pool": true,
+    "final_evidence_after_protocol_freeze": true,
+    "not_claimed": [
+      "MuJoCo SOTA",
+      "D4RL SOTA",
+      "real robot validation",
+      "large-scale video world-model dominance"
+    ]
+  },
+  "artifact_hashes": {
+    "mujoco_results": "3594bf6687dab8c0cff710c900967048190402259c675b9e32a804cc712b1993",
+    "mujoco_summary": "f524e2bbd010340a465707e75e04342417c6b0f6770ddf80c1f7b53c7f49d67a",
+    "mujoco_paired_effects": "961e24e5f5408c536cca5b639fcaf8dfdbcb9ba6e109fb1647737f16d5544ef5",
+    "mujoco_calibration": "b4a8f7fa28e3dc6ca1263d2ff73f1ece81554c8cefa3530bc0bffcf7f3d4ea54",
+    "generated_results": "901b604b1a3e89d39428ad239d701947e441b091aac07efa5c15251680f9e525",
+    "mujoco_return_figure": "24d83ee387056925df918386e51644a4e8f280344094ae9fd7753e58dffb21ac",
+    "mujoco_regret_figure": "085309f8b451d0d78e19067f3fe4076d6c1c8c95295c43d6c46a35f113480bf5"
+  }
+}
