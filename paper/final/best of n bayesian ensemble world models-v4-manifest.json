@@ -1,0 +1,72 @@
+{
+  "paper_name": "Posterior-Tail Selection and Calibration-Gated Planning in Bayesian Ensemble World Models",
+  "desktop_pdf_name": "best of n bayesian ensemble world models-v4.pdf",
+  "version": "v4",
+  "source_folder": "C:\\Users\\wangz\\best of n bayesian ensemble world models",
+  "github_repo": "Jason-Wang313/best-of-n-bayesian-ensemble-world-models",
+  "remote_url": "https://github.com/Jason-Wang313/best-of-n-bayesian-ensemble-world-models.git",
+  "repo_pdf": "paper\\final\\best of n bayesian ensemble world models-v4.pdf",
+  "desktop_pdf": "C:\\Users\\wangz\\OneDrive\\Desktop\\best of n bayesian ensemble world models-v4.pdf",
+  "pdf_sha256": "EA9B3490E24FD49D663CE3AB0FE2EF12EFDDD42E6AB3DB09BF6F423D33E2754D",
+  "pdf_pages": 25,
+  "verified_on": "2026-06-16",
+  "protocol_freeze_files": [
+    {
+      "path": "results\\v4\\protocol_freeze.json",
+      "status": "FROZEN",
+      "benchmark": "Gymnasium classic-control real environment dynamics bridge",
+      "standard_envs": [
+        "Pendulum-v1",
+        "MountainCarContinuous-v0"
+      ]
+    },
+    {
+      "path": "results\\v4_mujoco\\protocol_freeze.json",
+      "status": "FROZEN",
+      "benchmark": "Gymnasium MuJoCo continuous-control world-model planning bridge",
+      "standard_envs": [
+        "InvertedPendulum-v5",
+        "Reacher-v5"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "command": "python -m compileall src experiments tests -q",
+      "status": "passed"
+    },
+    {
+      "command": "python -m pytest -q",
+      "status": "passed",
+      "summary": "11 passed"
+    },
+    {
+      "command": "powershell -ExecutionPolicy Bypass -File scripts\\build_paper.ps1 -FinalDesktop",
+      "status": "passed",
+      "notes": "latexmk/Perl path unavailable; direct pdflatex/bibtex fallback completed"
+    },
+    {
+      "command": "rg -n \"undefined|Citation.*undefined|Reference.*undefined|Rerun to get|Overfull|LaTeX Warning|Package natbib Warning\" paper\\main.log",
+      "status": "passed",
+      "summary": "no final unresolved citation/reference warnings, rerun warnings, or overfull boxes"
+    },
+    {
+      "command": "pdftoppm -png -r 120 paper\\final\\best of n bayesian ensemble world models-v4.pdf tmp\\pdfs\\bayes_v4",
+      "status": "passed",
+      "summary": "rendered 25 pages; visually inspected pages 1, 6, 7, 21, and 25"
+    }
+  ],
+  "claim_gates": {
+    "real_benchmark_present": true,
+    "recognized_mujoco_envs_present": true,
+    "uses_true_environment_returns_for_final_measurement": true,
+    "selector_gate_fit_on_calibration_only": true,
+    "standalone_baselines_not_inserted_into_selector_pool": true,
+    "not_claimed": [
+      "MuJoCo SOTA",
+      "D4RL SOTA",
+      "real robot validation",
+      "large-scale video world-model dominance"
+    ]
+  }
+}

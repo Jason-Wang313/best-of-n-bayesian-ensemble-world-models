@@ -4,6 +4,9 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
 
 
